@@ -223,3 +223,20 @@ Views
 - View の役割は Stores のデータを検知し、そのデータをレンダリングして表示することで、View のインタフェースによってはユーザからのボタン等の操作により、新たな Action を発生させる役割を持っているものでもある。
 - View は Actions や Dispatcher がどのような処理をしているかについて知る必要が無く、ただ Stores の変更を検知してその値をレンダリングすれば良い。
 
+## 2. JSX
+JSX（JavaScript XML）は、JavaScript の構文拡張で、JavaScript ファイル内に HTML のようなコードを記述できるようにするものであり、Meta によって開発された。
+
+JSX の大きな利点としてインジェクション攻撃を防ぐ。
+>デフォルトでは、React DOM は JSX に埋め込まれた値をレンダー前にエスケープします。このため、自分のアプリケーションで明示的に書かれたものではないあらゆるコードは、注入できないことが保証されます。レンダーの前に全てが文字列に変換されます。これは XSS (cross-site-scripting) 攻撃の防止に役立ちます。
+
+JSX は ECMAScript の標準ではなく、トランスパイラーで適切に JavaScript に変換する必要がる。そのため、JSX はただの JavaScript のシンタックスシュガーに過ぎない。そのトランスパイラが Babel である。```@babel/parser``` が JSX の構文解析を行い、構文解析後の Abstract Syntax Tree（抽象構文木）を使ってトランスパイルを行うには ```@babel/plugin-transform-react-jsx``` などの別途プラグインが必要。
+
+>トランスパイラー（transpiler）とは、一つのプログラミング言語のコードを、同じレベルの抽象度を持つ別のプログラミング言語のコードに変換するツールのことを指します。トランスパイラーは、通常、同じ種類の高水準言語間での変換を行います。これに対し、コンパイラーは高水準言語を低水準言語（例えば、アセンブリ言語やマシンコード）に変換します。トランスパイラーの例として Babel、TypeScript Compiler (tsc)、Sass など。
+
+```js
+// 変換される前の JSX コード
+<MyComponent prop="value">contents</MyComponent>
+
+// babel によって変換された後のコード
+React.createElement(MyComponent, { prop: "value" }, "contents");
+```
