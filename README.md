@@ -1,5 +1,5 @@
 # Fluent React - Notes
-Build Fast, Performant, and Intuitive Web Applications
+Build Fast, Performant, and Intuitive Web Applications - Tejas Kumar
 
 ## 1. The Entry-Level Stuff
 この章では、Reactの簡単な歴史、初期の価値提案、およびスケールにおける安全で予測可能で効率的な UI の更新問題の解決方法について取り上げている。また、Reactのコンポーネントモデルについても触れ、なぜこれが Web UI に革命をもたらしたのかについて議論している。
@@ -32,7 +32,7 @@ Build Fast, Performant, and Intuitive Web Applications
   > 双方向データバインディングとは、View の変更と Model の変更を ViewModel によって共通化する。View を更新すると Model の値が、Model が更新されると View の値が連動して反映される。
 
 ### React の誕生
-2013年に Meta (旧Facebook) が OSS としてリリース
+2013年に Meta (旧Facebook) が OSS としてリリース。
 #### 宣言的UI とコンポーネント志向:
 宣言的 UI は、最終的な UI がどのようになるか先に記述するアプローチ。宣言的の対義語が命令的であり、明示的に指示していくアプローチ（jQueryがそれ）。
 
@@ -162,10 +162,10 @@ export default LikeButton;
   - 双方向データバインディングの主な課題は、データのフローが複雑で予測できなくなる。
   - React は単方向データバインディングであり、データの伝播が親コンポーネントから子コンポーネントへ一方通行であり、子から親にデータの受け渡しはできない。子が親のデータを更新する場合は、親から子へコールバック関数を渡す必要がある。これにより、データがどのように更新されるのか予測しやすくなった。
 
-#### State のイミュータビリティ（不変性）
+#### State のイミュータビリティ（不変性）:
 State を immutable（不変）にすることで、値の変更は「オブジェクトの置き換えをしていない」か「オブジェクトの置き換えをしている」かの2択になる。これにより、変更の検出が容易であり（state が参照するオブジェクトに変化があったかのみ監視すればいい）、再描画のタイミングも分かりやすい。
 
-#### Flux Architecture
+#### Flux Architecture:
 Flux では状態管理と、その状態のレンダリングの一連の流れを以下のように図示している。
 
 <p align="center">
