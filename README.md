@@ -240,3 +240,49 @@ JSX は ECMAScript の標準ではなく、トランスパイラーで適切に 
 // babel によって変換された後のコード
 React.createElement(MyComponent, { prop: "value" }, "contents");
 ```
+
+## 3. The Virtual DOM
+#### DOM の更新は遅い
+
+DOM の操作（jQuery）は、要素の変更が発生するごとに DOM への反映が行われる。 しかし、DOMの更新は動作が重く、大規模になるとパフォーマンスの低下に繋がる。
+
+```document.querySelector()``` は $O(n)$ であり、```document.getElementById()``` は $O(1)$ であるが、ハッシュ衝突により最悪 $O(n)$ である。
+>文書マークアップにおける最初の要素を経由して文書ノードの深さ優先前順走査 (depth-first pre-order traversal) を使用して実行され、子ノードのカウント順で順次ノードを反復して行われます。
+
+また、レイアウトに依存する値を呼び出す際、DOM はその値が正しいか再計算する必要があるため、以下の ```div.offsetWidth``` では DOM の reflow が再びトリガーされてしまう。
+```html
+<body>
+  <div id="my-div"></div>
+  <script>
+    var div = document.getElementById("my-div");
+    console.log(div.offsetWidth);
+  </script>
+</body>
+```
+
+#### React の仮想 DOM
+仮想 DOM は単なる JS オブジェクト。リアルな DOM とちがって構造の整合性のチェックはいらないし、 構造の変更に応じたイベントのバブルアップもリソースローディングもレンダリングもない。そして、この仮想 DOM ツリーは ```ReactElement``` というノードの組み合わせであり、コンポーネントのコンストラクタ呼び出しに必要な最低限の情報しかもっていないため、非常に軽い。
+
+```js
+const element = React.createElement(
+  "div",
+  { className: "my-class" },
+  "Hello, world!"
+);
+
+// console.log(element);
+{
+  $$typeof: Symbol(react.element),
+  type: "div",
+  key: null,
+  ref: null,
+  props: {
+    className: "my-class",
+    children: "Hello, world!"
+  },
+  _owner: null,
+  _store: {}
+}
+```
+
+これらは元に仮想 DOM を作成後、リアル DOM ツリーと差分を確認して、差分があった箇所だけリアル DOM を変更する。
