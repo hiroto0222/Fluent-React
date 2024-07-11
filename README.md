@@ -242,7 +242,7 @@ React.createElement(MyComponent, { prop: "value" }, "contents");
 ```
 
 ## 3. The Virtual DOM
-#### DOM の更新は遅い
+### DOM の更新は遅い
 
 DOM の操作（jQuery）は、要素の変更が発生するごとに DOM への反映が行われる。 しかし、DOMの更新は動作が重く、大規模になるとパフォーマンスの低下に繋がる。
 
@@ -260,7 +260,7 @@ DOM の操作（jQuery）は、要素の変更が発生するごとに DOM へ�
 </body>
 ```
 
-#### React の仮想 DOM
+### React の仮想 DOM
 仮想 DOM は単なる JS オブジェクト。リアルな DOM とちがって構造の整合性のチェックはいらないし、 構造の変更に応じたイベントのバブルアップもリソースローディングもレンダリングもない。そして、この仮想 DOM ツリーは ```ReactElement``` というノードの組み合わせであり、コンポーネントのコンストラクタ呼び出しに必要な最低限の情報しかもっていないため、非常に軽い。
 
 ```js
@@ -286,3 +286,33 @@ const element = React.createElement(
 ```
 
 これらは元に仮想 DOM を作成後、リアル DOM ツリーと差分を確認して、差分があった箇所だけリアル DOM を変更する。
+
+## 4. Inside Reconciliation
+Reconciliation とは、現在の仮想 DOM と WorkInProgress（新しい仮想 DOM）の2つの木を再帰的に比較して差分を計算し、実際の DOM に必要な更新のみを行うプロセスのことを指す。
+
+### Stack Reconciler
+React 16 以降の reconciliation は Fiber Reconciler と呼ばれているが、それまでは Stack Reconciler と呼ばれていた。Stack Reconciler は更新の優先順位付けを行わなず、起きた更新の順序ごとにのみ行われる。また、同期的に差分の計算を行うため、現在の仮想 DOM と新しい仮想 DOM の差分検知が行われる間スレッドを占有してしまい、すべてのイベントは差分検知が終了するまで待機する必要があった。
+
+### Fiber Reconciler
+Fiber Reconciler は Stack Reconciler の欠点を解消するため以下の機能を持ち合わせている。
+
+- 差分検知の作業を Fiber 単位で行うことができ、複数のフレームに分散できる
+- 新しい更新が入ってきた時に作業を一時停止、中断、再利用できる
+- 更新をする際に優先順位を割り当てられる
+
+これらのことを行うには作業自体を小さく分解する必要があり、この実行する作業の単位を Fiber と呼ぶ。
+
+### Fiber
+実行する作業の単位であり、React の要素すべて Fiber Node に変換される。
+Fiber Node は最初のレンダリングでのみ作成され、それ以降は、すでに作成されたFiber がコンポーネントの状態を保持するため、mutable（不変）である。
+
+Fiber Reconcilation はダブルバッファリングに似ており、Render Phase と Commit Phase に分けられる。
+> ダブルバッファリングでは、2つの画面バッファを準備することにより、描画途中の情報が表示されず、描画の滑らかさを保つことができます。具体的には、バッファAに描画を行い、描画が完了したらバッファの入れ替えを行い、バッファBを表示することにより、チラつきや乱れをなくします。これにより、高速な画面描画が可能となります。
+
+- Render Phase
+  - Component の状態変更など、Application の全ての更新に対して呼び出される。このフェーズでは、Current Tree がルートからリーフまでトラバースされ、ツリー内の既存の Fiber が更新され、新しい state と prop で処理された WorkInProgress Tree を作成する。このフェーズは非同期であり、現在処理中の Fiber の優先度よりも高い優先度で更新された Fiber が間に入ると、優先順位の高いタスクが先に処理されるように、Fiber の処理を停止または中断することができる。
+- Commit Phase
+  - Render Phase で新しく作成された vDOM が実際の DOM へ再描画されるフェース。このフェーズは同期的に実行され、一度 Commit が始まると中断することはできない。このフェーズが完了すると WorkInProgress Tree は Current Tree としてマークされる。
+
+### まとめ
+React Fiber とはレンダリングの作業を分割し、複数のフレームに分散して DOM の更新を行なっている。
