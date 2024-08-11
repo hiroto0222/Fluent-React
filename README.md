@@ -316,3 +316,86 @@ Fiber Reconcilation はダブルバッファリングに似ており、Render Ph
 
 ### まとめ
 React Fiber とはレンダリングの作業を分割し、複数のフレームに分散して DOM の更新を行なっている。
+
+## 5. Common Questions and Powerful Patterns
+### Memoization
+同一のpropsでコンポーネントがレンダリングされる場合、React.memoを使うことでReactはコンポーネントを再レンダリングしないで、最後にレンダリングされた結果を再利用する（結果が cache される）。props以外の値が渡ってきても再レンダリングされないが、propsの値が渡ってきてその値が変更されたら再レンダリングされる。
+
+```js
+function TodoList({ todos }) {
+  return (
+    <ul>
+      {todos.map((todo) => (
+        <li key={todo.id}>{todo.title}</li>
+      ))}
+    </ul>
+  );
+}
+
+function App() {
+  const todos = Array.from({ length: 1000000 });
+  const [name, setName] = useState("");
+
+  return (
+    <div>
+      <input value={name} onChange={(e) => setName(e.target.value)} />
+      <TodoList todos={todos} />
+    </div>
+  );
+}
+```
+
+```input``` の値が更新される度に ```TodoList``` コンポーネントは再レンダリングされる。状態がコンポーネント内で変更されると、そのコンポーネントから下のツリー内にあるすべての関数（コンポーネント）がリコンシリエーション（再計算）される。```TodoList``` の無駄な再描画を防ぐために、```memo``` で囲む。
+
+```js
+const MemoizedTodoList = React.memo(function TodoList({ todos }) {
+  return (
+    <ul>
+      {todos.map((todo) => (
+        <li key={todo.id}>{todo.title}</li>
+      ))}
+    </ul>
+  );
+});
+```
+
+#### React.memoのpropsの比較について
+Reactでは等価性の比較を Object.is を用いて行なっており、React.memo の props の比較やその他（useEffect, useCallback, useMemo）の依存配列の比較などにも Object.is が使用される。
+
+しかし、オブジェクトや配列、関数などのオブジェクト型（プリミティブ型ではないもの）を比較する場合、値そのものではなく参照先データを比較する。
+
+そのため、同じキーや値を持つオブジェクトや、同じ値を持つ配列でも再レンダリング前後では異なる値として認識され、再描画されてしまう（```MemoizedList``` は ```Increment``` が呼ばれる度に ```favoriteFruits``` という新しい配列が作成されるため、再描画されてしまう）。
+
+```js
+function ParentComponent({ allFruits }) {
+  const [count, setCount] = React.useState(0);
+  const favoriteFruits = allFruits.filter((fruit) => fruit.isFavorite);
+
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <MemoizedList items={favoriteFruits} />
+    </div>
+  );
+}
+```
+
+そのため、上記の場合だと関数に渡す引数をメモ化した方がいいかも。
+
+```js
+function ParentComponent({ allFruits }) {
+  const [count, setCount] = React.useState(0);
+  // 配列を cache することで中身が変わらない限り同じ値を参照する
+  const favoriteFruits = React.useMemo(
+    () => allFruits.filter((fruit) => fruit.isFavorite),
+    []
+  );
+
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <List items={favoriteFruits} />
+    </div>
+  );
+}
+```
